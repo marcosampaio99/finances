@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finanças</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#14161a; --dim:#6b7280; --border:#e5e7eb; --green:#10b981; --red:#ef4444; --blue:#3b82f6; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#0f1119; --card:#1a1d27; --text:#eef0f3; --dim:#9aa1ac; --border:#2a2e37; }
+  }
+  :root[data-theme="dark"] { --bg:#0f1119; --card:#1a1d27; --text:#eef0f3; --dim:#9aa1ac; --border:#2a2e37; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', Helvetica, sans-serif; background: var(--bg); color: var(--text); padding: 16px; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 26px; margin-bottom: 16px; }
+  h2 { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat { font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .pos { color: var(--green); } .neg { color: var(--red); }
+  .tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+  .tab { background: none; border: none; padding: 12px 16px; cursor: pointer; color: var(--dim); font-weight: 600; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 15px; }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .page { display: none; } .page.active { display: block; }
+  form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  input, select { padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); font-size: 14px; min-width: 0; flex: 1 1 120px; }
+  button { padding: 9px 16px; background: var(--blue); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
+  button.ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  button.del { background: none; color: var(--red); padding: 4px 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 9px 6px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { color: var(--dim); font-size: 12px; text-transform: uppercase; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .msg { color: var(--red); font-size: 14px; margin-bottom: 10px; min-height: 18px; }
+  .auth { max-width: 360px; margin: 60px auto; }
+  .auth form { flex-direction: column; }
+  .auth input { flex: none; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .empty { color: var(--dim); text-align: center; padding: 16px; }
+  @media (max-width: 640px) { th, td { font-size: 13px; } .stat { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- AUTENTICAÇÃO -->
+  <div id="authView" class="auth" style="display:none">
+    <div class="card">
+      <h1>💰 Finanças</h1>
+      <div class="msg" id="authMsg"></div>
+      <form id="authForm">
+        <input type="email" id="email" placeholder="Email" required autocomplete="email">
+        <input type="password" id="password" placeholder="Palavra-passe (mín. 6)" required minlength="6" autocomplete="current-password">
+        <button type="submit" id="loginBtn">Entrar</button>
+        <button type="button" class="ghost" id="signupBtn">Criar conta</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="appView" style="display:none">
+    <div class="topbar">
+      <h1>💰 Finanças</h1>
+      <button class="ghost" id="logoutBtn">Sair</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="overview">Visão Geral</button>
+      <button class="tab" data-tab="expenses">Despesas</button>
+      <button class="tab" data-tab="income">Receitas</button>
+      <button class="tab" data-tab="investments">Investimentos</button>
+    </div>
+
+    <!-- VISÃO GERAL -->
+    <section class="page active" id="page-overview">
+      <div class="grid">
+        <div class="card"><h2>Ativos totais</h2><div class="stat" id="totalAssets">0 €</div></div>
+        <div class="card"><h2>Saldo disponível</h2><div class="stat pos" id="available">0 €</div></div>
+        <div class="card"><h2>Despesas este mês</h2><div class="stat neg" id="expMonth">0 €</div></div>
+      </div>
+      <div class="card">
+        <h2>Contas e ativos</h2>
+        <form id="accountForm">
+          <input id="accName" placeholder="Nome (ex: Santander)" required>
+          <select id="accCat">
+            <option value="Cash">Cash</option>
+            <option value="Investimentos">Investimentos</option>
+            <option value="Cripto">Cripto</option>
+            <option value="Subsídio">Subsídio (fora do total)</option>
+            <option value="Outro">Outro</option>
+          </select>
+          <input id="accValue" type="number" step="0.01" placeholder="Valor" required>
+          <button type="submit">Adicionar</button>
+        </form>
+        <table>
+          <thead><tr><th>Conta</th><th>Categoria</th><th class="num">Valor</th><th></th></tr></thead>
+          <tbody id="accountsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DESPESAS -->
+    <section class="page" id="page-expenses">
+      <div class="card">
+        <h2>Registar despesa</h2>
+        <form id="expenseForm">
+          <input type="date" id="expDate" required>
+          <select id="expCat">
+            <option>Restaurantes/Café</option><option>Roupa/Acessórios</option><option>Prendas</option>
+            <option>Saúde</option><option>Subscrições</option><option>Transportes</option>
+            <option>Lazer</option><option>Casa</option><option>Outros</option>
+          </select>
+          <select id="expAccount"></select>
+          <input id="expDesc" placeholder="Descrição">
+          <input id="expValue" type="number" step="0.01" placeholder="Valor" required>
+          <button type="submit">Registar</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Histórico</h2>
+        <table>
+          <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="num">Valor</th><th></th></tr></thead>
+          <tbody id="expensesTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- RECEITAS -->
+    <section class="page" id="page-income">
+      <div class="grid">
+        <div class="card"><h2>Total receitas</h2><div class="stat pos" id="incTotal">0 €</div></div>
+      </div>
+      <div class="card">
+        <h2>Registar receita</h2>
+        <form id="incomeForm">
+          <input type="date" id="incDate" required>
+          <input id="incDesc" placeholder="Descrição" required>
+          <input id="incValue" type="number" step="0.01" placeholder="Valor" required>
+          <button type="submit">Registar</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Histórico</h2>
+        <table>
+          <thead><tr><th>Data</th><th>Descrição</th><th class="num">Valor</th><th></th></tr></thead>
+          <tbody id="incomeTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- INVESTIMENTOS -->
+    <section class="page" id="page-investments">
+      <div class="grid">
+        <div class="card"><h2>Investido</h2><div class="stat" id="invInvested">0 €</div></div>
+        <div class="card"><h2>Valor atual</h2><div class="stat" id="invCurrent">0 €</div></div>
+        <div class="card"><h2>Lucro/Prejuízo</h2><div class="stat" id="invPL">0 €</div></div>
+      </div>
+      <div class="card">
+        <h2>Registar posição</h2>
+        <form id="invForm">
+          <input type="date" id="invDate" required>
+          <input id="invBroker" placeholder="Broker" required>
+          <input id="invAsset" placeholder="Ativo" required>
+          <input id="invInvestedVal" type="number" step="0.01" placeholder="Investido" required>
+          <input id="invCurrentVal" type="number" step="0.01" placeholder="Valor atual" required>
+          <button type="submit">Registar</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Posições</h2>
+        <table>
+          <thead><tr><th>Data</th><th>Broker</th><th>Ativo</th><th class="num">Investido</th><th class="num">Atual</th><th class="num">L/P</th><th></th></tr></thead>
+          <tbody id="invTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://cdn.jsdelivr.net/npm/firebase@10.14.1/app/+esm";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }
+  from "https://cdn.jsdelivr.net/npm/firebase@10.14.1/auth/+esm";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, orderBy }
+  from "https://cdn.jsdelivr.net/npm/firebase@10.14.1/firestore/+esm";
+
+// Valores públicos do cliente web. A segurança está nas regras do Firestore.
+const app = initializeApp({
+  apiKey: "AIzaSyBc5Wy3o4jggDUT2AUopL7opQtBDPIMoxA",
+  authDomain: "finance-55433.firebaseapp.com",
+  projectId: "finance-55433",
+  storageBucket: "finance-55433.firebasestorage.app",
+  messagingSenderId: "261111060417",
+  appId: "1:261111060417:web:f88a8bfb8e0f8cc4a84140"
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let user = null;
+let state = { accounts: [], expenses: [], income: [], investments: [] };
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const eur = (n) => new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(n || 0);
+const today = () => new Date().toISOString().slice(0, 10);
+const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+
+// ---------- Firestore ----------
+const col = (name) => collection(db, "users", user.uid, name);
+
+async function loadAll() {
+  const names = ["accounts", "expenses", "income", "investments"];
+  // Só as coleções com data podem ser ordenadas por data (no Firestore, documentos sem o campo ficam de fora).
+  const results = await Promise.all(names.map(n => n === "accounts"
+    ? getDocs(col(n))
+    : getDocs(query(col(n), orderBy("date", "desc")))));
+  names.forEach((n, i) => {
+    state[n] = results[i].docs.map(d => ({ id: d.id, ...d.data() }));
+  });
+  render();
+}
+
+async function add(name, data) {
+  await addDoc(col(name), data);
+  await loadAll();
+}
+
+async function remove(name, id) {
+  await deleteDoc(doc(db, "users", user.uid, name, id));
+  await loadAll();
+}
+
+// Soma (ou subtrai, se delta for negativo) ao saldo de uma conta.
+async function adjustAccount(accountId, delta) {
+  const acc = state.accounts.find(a => a.id === accountId);
+  if (!acc) return;
+  await updateDoc(doc(db, "users", user.uid, "accounts", accountId), {
+    value: Math.round((Number(acc.value) + delta) * 100) / 100
+  });
+}
+
+// Despesa: desconta da conta escolhida. Ao apagar, devolve o valor à conta.
+async function addExpense(data) {
+  await addDoc(col("expenses"), data);
+  if (data.accountId) await adjustAccount(data.accountId, -data.value);
+  await loadAll();
+}
+
+async function removeExpense(id) {
+  const exp = state.expenses.find(e => e.id === id);
+  await deleteDoc(doc(db, "users", user.uid, "expenses", id));
+  if (exp && exp.accountId) await adjustAccount(exp.accountId, Number(exp.value));
+  await loadAll();
+}
+
+// ---------- Render ----------
+function render() {
+  const subsidy = (a) => a.category === "Subsídio";
+  const assets = state.accounts.filter(a => !subsidy(a));
+  const total = sum(assets, a => a.value);
+  const available = sum(state.accounts.filter(a => a.category === "Cash"), a => a.value);
+  $("totalAssets").textContent = eur(total);
+  $("available").textContent = eur(available);
+
+  const month = new Date().toISOString().slice(0, 7);
+  $("expMonth").textContent = eur(sum(state.expenses.filter(e => e.date.startsWith(month)), e => e.value));
+
+  $("accountsTable").innerHTML = state.accounts.map(a => `
+    <tr><td>${esc(a.name)}</td><td>${esc(a.category)}</td>
+    <td class="num">${eur(a.value)}</td>
+    <td><button class="del" data-del="accounts" data-id="${a.id}">✕</button></td></tr>`).join("")
+    || `<tr><td colspan="4" class="empty">Sem contas. Adiciona a primeira acima.</td></tr>`;
+
+  $("expAccount").innerHTML = state.accounts.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join("")
+    || `<option value="">Adiciona uma conta primeiro</option>`;
+
+  $("expensesTable").innerHTML = state.expenses.map(e => {
+    const acc = state.accounts.find(a => a.id === e.accountId);
+    return `<tr><td>${esc(e.date)}</td><td>${esc(e.category)}${acc ? " · " + esc(acc.name) : ""}</td>
+      <td>${esc(e.description)}</td><td class="num">-${eur(e.value)}</td>
+      <td><button class="del" data-del="expenses" data-id="${e.id}">✕</button></td></tr>`;
+  }).join("") || `<tr><td colspan="5" class="empty">Sem despesas</td></tr>`;
+
+  $("incTotal").textContent = eur(sum(state.income, i => i.value));
+  $("incomeTable").innerHTML = state.income.map(i => `
+    <tr><td>${esc(i.date)}</td><td>${esc(i.description)}</td>
+    <td class="num pos">+${eur(i.value)}</td>
+    <td><button class="del" data-del="income" data-id="${i.id}">✕</button></td></tr>`).join("")
+    || `<tr><td colspan="4" class="empty">Sem receitas</td></tr>`;
+
+  const invested = sum(state.investments, i => i.invested);
+  const current = sum(state.investments, i => i.current);
+  const pl = current - invested;
+  $("invInvested").textContent = eur(invested);
+  $("invCurrent").textContent = eur(current);
+  $("invPL").textContent = (pl >= 0 ? "+" : "") + eur(pl);
+  $("invPL").className = "stat " + (pl >= 0 ? "pos" : "neg");
+  $("invTable").innerHTML = state.investments.map(i => {
+    const g = i.current - i.invested;
+    return `<tr><td>${esc(i.date)}</td><td>${esc(i.broker)}</td><td>${esc(i.asset)}</td>
+      <td class="num">${eur(i.invested)}</td><td class="num">${eur(i.current)}</td>
+      <td class="num ${g >= 0 ? "pos" : "neg"}">${g >= 0 ? "+" : ""}${eur(g)}</td>
+      <td><button class="del" data-del="investments" data-id="${i.id}">✕</button></td></tr>`;
+  }).join("") || `<tr><td colspan="7" class="empty">Sem posições</td></tr>`;
+}
+
+// ---------- Eventos ----------
+document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b === btn));
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + btn.dataset.tab));
+}));
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-del]");
+  if (!b) return;
+  if (!confirm("Apagar este registo?")) return;
+  if (b.dataset.del === "expenses") await removeExpense(b.dataset.id);
+  else await remove(b.dataset.del, b.dataset.id);
+});
+
+$("accountForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await add("accounts", { name: $("accName").value.trim(), category: $("accCat").value, value: Number($("accValue").value) });
+  e.target.reset();
+});
+
+$("expenseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await addExpense({
+    date: $("expDate").value, category: $("expCat").value, accountId: $("expAccount").value || null,
+    description: $("expDesc").value.trim(), value: Number($("expValue").value)
+  });
+  e.target.reset(); $("expDate").value = today();
+});
+
+$("incomeForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await add("income", { date: $("incDate").value, description: $("incDesc").value.trim(), value: Number($("incValue").value) });
+  e.target.reset(); $("incDate").value = today();
+});
+
+$("invForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await add("investments", {
+    date: $("invDate").value, broker: $("invBroker").value.trim(), asset: $("invAsset").value.trim(),
+    invested: Number($("invInvestedVal").value), current: Number($("invCurrentVal").value)
+  });
+  e.target.reset(); $("invDate").value = today();
+});
+
+// Autenticação
+$("authForm").addEventListener("submit", (e) => e.preventDefault());
+$("loginBtn").addEventListener("click", () => authAction(signInWithEmailAndPassword));
+$("signupBtn").addEventListener("click", () => authAction(createUserWithEmailAndPassword));
+$("logoutBtn").addEventListener("click", () => signOut(auth));
+
+async function authAction(fn) {
+  $("authMsg").textContent = "";
+  if (!$("authForm").reportValidity()) return;
+  try {
+    await fn(auth, $("email").value.trim(), $("password").value);
+  } catch (err) {
+    $("authMsg").textContent = "Não foi possível: " + (err.code || err.message);
+  }
+}
+
+onAuthStateChanged(auth, async (u) => {
+  user = u;
+  $("authView").style.display = u ? "none" : "block";
+  $("appView").style.display = u ? "block" : "none";
+  if (u) {
+    $("expDate").value = today(); $("incDate").value = today(); $("invDate").value = today();
+    await loadAll();
+  }
+});
+</script>
+</body>
+</html>
