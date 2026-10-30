@@ -14,7 +14,7 @@ import {
 } from "@/features/investments/model";
 import { OperationForm, PositionForm, ValuationForm } from "@/features/investments/PositionForms";
 import { AppPageHeader } from "@/features/shell/PageHeader";
-import { dateLabel, dayLabel, eur, pct, quantity, signedEur, signedPct } from "@/shared/lib/format";
+import { dateLabel, dayLabel, eur, pct, quantity, signedEur, signedPct, unitPrice } from "@/shared/lib/format";
 import { sum } from "@/shared/lib/math";
 import { DonutChart } from "@/shared/ui/charts/DonutChart";
 import { TrendChart } from "@/shared/ui/charts/TrendChart";
@@ -113,7 +113,7 @@ export function InvestmentsPage() {
           {p.quantity === null ? <span className="faint">—</span> : quantity(p.quantity)}
           {p.avgPrice !== null && p.quantity !== 0 && (
             <div className="row-meta">
-              {p.avgPrice.toLocaleString("pt-PT", { maximumFractionDigits: 4 })} {p.currency}
+              {unitPrice(p.avgPrice, p.currency)}
             </div>
           )}
         </td>

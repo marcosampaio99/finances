@@ -1,5 +1,6 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { eurCompact } from "@/shared/lib/format";
+import { useBalancesHidden } from "@/shared/lib/privacy";
 import { AXIS_TICK, ChartTooltip } from "@/shared/ui/charts/ChartTooltip";
 
 // Evolução de uma única série ao longo do tempo.
@@ -14,9 +15,11 @@ export function TrendChart({
   ariaLabel: string;
   color?: string;
 }) {
+  const hidden = useBalancesHidden();
   return (
     <div className="chart chart-sm" role="img" aria-label={ariaLabel}>
-      <ResponsiveContainer width="100%" height="100%">
+      {/* O Recharts guarda as etiquetas dos eixos: a key obriga a refazê-las ao ocultar ou mostrar saldos. */}
+      <ResponsiveContainer key={String(hidden)} width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 6, right: 6, bottom: 0, left: 0 }}>
           <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
           <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={false} minTickGap={24} />

@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import type { CashflowPoint } from "@/features/transactions/analytics";
 import { eurCompact } from "@/shared/lib/format";
+import { useBalancesHidden } from "@/shared/lib/privacy";
 import { AXIS_TICK, ChartTooltip } from "@/shared/ui/charts/ChartTooltip";
 
 const SERIES = [
@@ -60,9 +61,11 @@ export function useCashflowSeries() {
 }
 
 export function CashflowChart({ data, hidden }: { data: CashflowPoint[]; hidden: Set<SeriesKey> }) {
+  const balancesHidden = useBalancesHidden();
   return (
     <div className="chart" role="img" aria-label="Receitas, despesas e poupança líquida ao longo do período">
-      <ResponsiveContainer width="100%" height="100%">
+      {/* O Recharts guarda as etiquetas dos eixos: a key obriga a refazê-las ao ocultar ou mostrar saldos. */}
+      <ResponsiveContainer key={String(balancesHidden)} width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 6, right: 6, bottom: 0, left: 0 }} barGap={2}>
           <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
           <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={false} minTickGap={20} />

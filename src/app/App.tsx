@@ -9,9 +9,12 @@ import { SettingsPage } from "@/features/settings/SettingsPage";
 import { AppLayout } from "@/features/shell/AppLayout";
 import { TransactionsPage } from "@/features/transactions/TransactionsPage";
 import { useSession } from "@/shared/auth/session";
+import { useBalancesHidden } from "@/shared/lib/privacy";
 
 export function App() {
   const { user, loading } = useSession();
+  // Renderiza as rotas de novo ao mudar: os valores são formatados durante a renderização.
+  useBalancesHidden();
 
   if (loading) return null;
   if (!user) return <LoginPage />;

@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "@/app/App";
 import { AppProviders } from "@/app/AppProviders";
+import { setBalancesHidden } from "@/shared/lib/privacy";
 import { failures, resetFakeFirebase, seed, store } from "@/test/fakeFirebase";
 
 vi.mock("firebase/app", () => import("@/test/fakeFirebase"));
@@ -48,6 +49,7 @@ async function saveMovement(
 
 beforeEach(() => {
   resetFakeFirebase();
+  setBalancesHidden(false);
   window.history.pushState({}, "", "/");
 });
 
@@ -287,6 +289,23 @@ describe("investimentos", () => {
     await screen.findByText("Posição eliminada");
     expect(values("investments")).toEqual([]);
     expect(values("investmentValuations")).toHaveLength(1);
+  });
+});
+
+describe("ocultar saldos", () => {
+  it("oculta e mostra os valores sem alterar os dados e lembra a escolha", async () => {
+    seed(path("accounts"), "a1", { name: "Santander", type: "checking", value: 1234.5 });
+    const user = await login();
+    await waitFor(() => expect(statValue("Património líquido")).toBe("1234,50 €"));
+
+    await user.click(screen.getByRole("button", { name: "Ocultar saldos" }));
+    expect(statValue("Património líquido")).toBe("•••• €");
+    expect(document.body.textContent).not.toContain("1234,50");
+    expect(localStorage.getItem("financas.hideBalances")).toBe("1");
+    expect(store.get(path("accounts"))!.get("a1")!.value).toBe(1234.5);
+
+    await user.click(screen.getByRole("button", { name: "Mostrar saldos" }));
+    expect(statValue("Património líquido")).toBe("1234,50 €");
   });
 });
 
